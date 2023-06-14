@@ -1,4 +1,4 @@
-#  C++学习笔记
+#   C++学习笔记
 
 [toc]
 
@@ -96,7 +96,7 @@ auto f = [ ]{cout<<"hi\n";}//无参数
 > 
 
 ```cpp
-void print() {
+void print() {//避免无穷递归
 }
 template <typename K, typename... T>
 void print(const K& str1, const T&... str2) {
@@ -113,7 +113,27 @@ for(auto e:a) cout<<e<<' ';
 for(auto& e:a) e*=3;
 ```
 
+## 左值与右值
 
+> 左值：指定了一个函数或对象，它是一个可以取地址的表达式
+>
+> 右值：不和对象相关联的值(字面量)或其求值结果是字面量或者一个匿名的临时对象
+>
+> 左值可以当右值用
+
+左值引用：int&
+
+右值引用：int&&（延迟右值生命周期）
+
+- 当函数参数使用**模版**T&&时既可以接受左值也可以接受右值
+
+### 移动语义
+
+`std::move(xx)`将左值转为右值
+
+### 完美转发
+
+`std::forward<T>(xx)`传参数时保持参数的左右值属性
 
 ------
 
@@ -122,8 +142,6 @@ for(auto& e:a) e*=3;
 # STL标准库
 
 ## 容器
-
-### 容器通用功能
 
 ![截屏2022-12-10 20.22.10](./图片/截屏2022-12-10 20.22.10.png)
 
@@ -143,55 +161,169 @@ for(auto& e:a) e*=3;
 
 #### substr获取子字符
 
-` string sub = str.substr(1, 3);`表示获取从第 2 个字符开始长度为 3 的字符串  
+` string sub = str.substr(1, 3);`表示获取从下标1开始长度为 3 的字符串  
 
-`string sub = str.substr(1);`表示获取从第2个字符开始到最后的字符串
+`string sub = str.substr(1);`表示获取从下标1开始到最后的字符串
+
+#### c_str获取C风格字符串
+
+`s.c_str()`返回存储的C风格字符串的首地址
 
 ### vector
 
 #### 初始化
 
-`vector<int> a;` <数据类型>
+`vector<type> a` 
+
+`vector<type> a(n)`初始长度为n
+
+`vector<type> a(n,x)`初始长度为n且每个数据都是x
 
 #### erase删除
 
-`s.erase(x,y)` 表示将字符串s删除[x,y)之间的元素（x，y为迭代器）
+`a.erase(x,y)` 表示将字符串s删除[x,y)之间的元素（x，y为迭代器）
 
 #### insert插入
 
-`s.insert(x,y)` 表示将元素y插入到s的x位置处
+`a.insert(x,y)` 表示将元素y插入到s的x位置处
 
 #### push_back末尾插入
 
-`s.push_back(x)` 表示在s的末尾添加元素x
+`a.push_back(x)` 表示在s的末尾添加元素x
+
+#### pop_back末尾删除
+
+`a.pop_back()`
 
 ![截屏2022-12-10 22.41.24](./图片/截屏2022-12-10 22.41.24.png)
 
-### set
+### stack
+
+> 先进后出,无clear()函数
 
 #### 初始化
 
-`set<int> a;`
+`stack<int> a;`
 
-#### 插入
+#### push推入
+
+`a.push(x);`
+
+#### top返回顶部元素
+
+`a.top();`
+
+#### pop推出（无返回值）
+
+`a.pop();`
+
+### queue
+
+> 先进先出，无clear()函数
+
+#### 初始化
+
+`queue<int> a;`
+
+#### push入队
+
+`a.push(x);`
+
+#### pop出队
+
+`a.pop();`无返回值
+
+#### front返回头元素
+
+`a.front();`
+
+#### back返回尾元素
+
+`a.back();`
+
+### priority_queue
+
+> 优先级队列（堆），无clear()函数
+>
+> 默认大顶堆
+
+#### 初始化
+
+`priority_queue<int> a`	大顶堆
+
+`priority_queue<int,vector<int>,greater<int>> a  `	小顶堆
+
+#### push入队
+
+`a.push(x);`
+
+#### top返回堆顶元素
+
+`a.top();`
+
+#### pop推出（无返回值）
+
+`a.pop();`
+
+### deque
+
+> 双端队列，效率较低
+
+#### 初始化
+
+`deque<int> a`
+
+#### front/back返回头/尾元素
+
+`a.front();a.back();`
+
+#### push_front/push_back向队首/尾加入元素
+
+`a.push_front(x);a.push_back(x);`
+
+#### pop_front/pop_back删除队首/尾元素
+
+`a.pop_front();a.pop_back();`
+
+### set/multiset
+
+> set无重复元素，multiset有重复元素
+
+#### 初始化
+
+`set<int> a;multiset<int> a;`
+
+#### insert插入
 
 `a.insert(x);`
 
-#### 查找
+#### find查找
 
 `a.find(x);`返回迭代器，没找到返回.end()
 
-#### 删除
+#### count计数
 
-`a.erase(x);`
+`a.count(x);`返回元素x的个数
 
-### map
+#### erase删除
+
+`a.erase(x);`1. x是元素则删除所有x 2. x是迭代器删除这个迭代器
+
+#### lower_bound/upper_bound
+
+`a.lower_bound(x)`	返回**大于等于**x的最小数的迭代器
+
+`a.upper_bound(x)`	返回**大于**x的最小数的迭代器
+
+不存在返回end()
+
+### map/multimap
 
 > 自动建立key － value的对应。key 和 value可以是任意你需要的类型，包括自定义类型
 
 #### 初始化
 
-`map<int,string> m;`<key,value>
+`map/multimap<int,string> m;`<key,value>
 
 #### 插入
 
@@ -199,67 +331,65 @@ for(auto& e:a) e*=3;
 2. `m.insert(pair<int, string>(000, "student_zero"));`(重复不覆盖)
 3. `m.insert(map<int, string>::value_type (001, "student_two"));`(重复不覆盖)
 
-#### 查找
+#### find查找
 
-```cpp
-// find 返回迭代器指向当前查找元素的位置否则返回map::end()位置
-iter = m.find("123");
-if(iter != m.end())
-   cout<<"Find, the value is"<<iter->second<<endl;
-else
-   cout<<"Do not Find"<<endl;
+`m.find(x)`	返回迭代器，没找到返回end()
 
-```
+#### erase删除
 
-#### 删除与清空
+删除：`m.erase(x); `x为key(删除成功返回1，否则0)
 
-删除：`m.erase(000); `000为key(删除成功返回1，否则0)
+#### lower_bound/upper_bound
 
-清空：`m.clear();`
+`a.lower_bound(x)`	返回**大于等于**x的最小数的迭代器
 
-### stack
+`a.upper_bound(x)`	返回**大于**x的最小数的迭代器
 
-> 先进后出
+不存在返回end()
 
-#### 初始化
+### unordered_set/unordered_multiset
 
-`stack<int> a;`
+### unordered_map/unordered_multimap
 
-#### 推入
+> 功能与上面类似，增删改查的时间复杂度O(1)
+>
+> 不支持lower_bound/upper_bound
 
-`a.push(x);`
+### bitset
 
-#### 返回顶部元素
-
-`a.pop();`
-
-#### 推出（无返回值）
-
-`a.push();`
-
-### queue
-
-> 先进先出
+> 每一位都是0/1，空间是bool数组的八分之一
 
 #### 初始化
 
-`queue<int> a;`
+`bitset<n> a` 	长度为n
 
-#### 入队
+#### count返回1的个数
 
-`a.push(x);`
+`a.count()` 
 
-#### 出队
+#### any判断是否有1
 
-`a.pop();`无返回值
+`a.any()`
 
-#### 返回头元素
+#### none判断是否全0
 
-`a.front();`
+`a.none()`
 
-#### 返回尾元素
+#### set置数
 
-`a.back();`
+`a.set()`	将所有位变成1
+
+`a.set(k,v)`	将第k位变成v
+
+#### reset讲所有位变成0
+
+`a.reset()`
+
+#### flip
+
+`a.flip()`	将所有位取反
+
+`a.flip(k)`	将第k位取反
 
 ### list
 
@@ -290,9 +420,9 @@ else
 #include <algorithm>
 ````
 
-#### max()、min()、abs()比较数字
+### max()、min()、abs()比较数字
 
-#### \*max_element()、*min_element()比较容器（数组、字符串等）
+### \*max_element()、*min_element()比较容器（数组、字符串等）
 
 ```cpp
 // min_element/max_element example
@@ -325,7 +455,7 @@ int main () {
 }
 ```
 
-#### swap()交换值
+### swap()交换值
 
 ```cpp
 #include <iostream>
@@ -345,7 +475,7 @@ int main()
 }
 ```
 
-#### reverse()翻转容器
+### reverse()翻转容器
 
 *reverse()函数可以将一个容器直接翻转，例如数组、动态数组和字符串等*
 
@@ -388,54 +518,29 @@ int main()
 }
 ```
 
-#### 快速排序——sort函数
+### sort排序
+
+> 快速排序，插入排序，堆排序综合
 
 **默认升序**
 
 ```cpp
-#include <iostream>
-#include <vector>
-#include <algorithm>
-using namespace std;
-int main()
-{
-    vector<int> sortv; //动态数组
-    for (int i = 0; i < 5; i++)
-    {
-        int t;
-        cin >> t;
-        sortv.push_back(t);
-    }
-    sort(sortv.begin(), sortv.end());
-    for (int i = 0; i < 5; i++)
-    {
-        cout << sortv[i] << endl;
-    }
-    //数组
-    int sortnums[6];
-    for (int i = 0; i < 5; i++)
-        cin >> sortnums[i];
-    sort(sortnums, sortnums + 5);
-    for (int i = 0; i < 5; i++)
-        cout << sortnums[i] << endl;
-    //此sort是升序排序
-    return 0;
-}
+sort(v.begin(),v.end());
 ```
 
 **降序**
 
 ```cpp
-在命名空间下方添加一个函数——cmp（名字任意）
-  bool cmp(int a, int b)
-{
-    return a > b;
-}
-sort函数改成这样
-  sort(v.begin(), v.end(), cmp);
+sort(v.begin(),v.end(),[](int a, int b){return a>b;});
 ```
 
-### 
+### unique去重
+
+> 使用前需排序，返回指向去重后的最后一个元素的下一个位置的迭代器(重复元素被置后)
+
+```cpp
+v.erase(unique(v.begin(),v.end()),v.end());
+```
 
 # C++基础
 
@@ -444,6 +549,17 @@ sort函数改成这样
 ### 类型转换
 
 ![](./图片/截屏2022-11-26 22.11.46.png)
+
+```cpp
+//用于执行基础类型之间的转换、指针之间的转换以及将一个表达式转换为另一种类型
+static_cast<type>(x) 
+//用于执行类之间的转换，需要进行运行时类型检查，因此只适用于具有多态性质的类
+dynamic_cast<type>(x)
+//用于删除变量的 const 属性或 volatile 属性
+const_cast<type>(x)
+//用于进行各种不同类型之间的转换，如指针类型和整数类型之间的转换
+reinterpret_cast<type>(x)
+```
 
 ### I/O流操纵符
 
@@ -465,6 +581,8 @@ cout<<fixed<<setprecision(n)<<a;//保留n位小数（末尾会补0）
 ### 枚举类型
 
 ![截屏2022-11-27 00.17.44](./图片/截屏2022-11-27 00.17.44.png)
+
+
 
 ### auto类型
 
@@ -702,7 +820,9 @@ for(auto& a:array)//可以修改原数组的值
 
 *返回值类型是指针（地址）*![截屏2022-12-04 01.28.50](./图片/截屏2022-12-04 01.28.50.png)
 
-### 指向函数的指针![截屏2022-12-04 01.17.23](./图片/截屏2022-12-04 01.17.23.png)
+### 指向函数的指针
+
+### ![截屏2022-12-04 01.17.23](./图片/截屏2022-12-04 01.17.23.png)
 
 ![截屏2022-12-04 01.25.19](./图片/截屏2022-12-04 01.25.19.png)
 
@@ -776,59 +896,124 @@ unique_ptr<数据类型> 指针名(new 数据类型);//定义智能指针
 
 ### 运算符重载
 
-#### 重载为类成员的运算符函数定义形式
+> 单目运算符：无形参为前置，有int形参为后置
 
 ![截屏2022-12-06 00.37.21](./图片/截屏2022-12-06 00.37.21.png)
 
-#### 双目运算符重载规则
+#### 双目运算符重载
 
 ```cpp
 class Complex {
 public:
   double real; // 实部
   double imaginary; // 虚部
-
-  // 定义重载的运算符函数
-  // 注意：这里使用了 operator+ 关键字
-  Complex operator+(const Complex &other) const {
-    Complex result;
-    result.real = real + other.real; // 实部相加
-    result.imaginary = imaginary + other.imaginary; // 虚部相加
-    return result;
-  }
+	Complex(double r, double i):real(r),imaginary(i){}
+  // operator+
+  Complex operator+(const Complex &c)const {
+        return Complex(real + c.real, imaginary + c.imaginary);
+    }
 };
 ```
 
-#### 前置单目运算符重载规则
-
-***函数返回值为\*this，参数用常引用效率高点***
-
-![截屏2022-12-06 00.39.33](./图片/截屏2022-12-06 00.39.33.png)
-
-#### 后置单目运算符 ++和--重载规则
-
-![截屏2022-12-06 00.39.45](./图片/截屏2022-12-06 00.39.45.png)
-
-**例如：**
+#### 复合运算符重载
 
 ```cpp
-Clock & Clock::operator ++ () { 
-    second++;
-    if (second >= 60) {
-        second -= 60;  minute++;
-        if (minute >= 60) {
-          minute -= 60; hour = (hour + 1) % 24;
-        }
-    }
-    return *this;
-}//前置++
-Clock Clock::operator ++ (int) {
-    //注意形参表中的整型参数
-    Clock old = *this;
+Complex& operator+=(const Complex &other){
+  this->real+=other.real;
+  this->real+=other.real;
+  return *this;
+}
+```
+
+#### 比较运算符重载
+
+```cpp
+//重载 < 运算符
+bool operator<(const Complex& c1, const Complex& c2) {
+	return c1.real < c2.real;
+}
+```
+
+#### 数组下标运算符重载
+
+```cpp
+//返回类型加&可通过下标修改
+double& operator[](int index){
+  if(xxx) return x[index];
+}
+```
+
+#### 负号运算符重载
+
+```cpp
+Complex operator-(){
+  return Complex(-real, -imaginary);
+}
+```
+
+#### 前后置 ++和--重载
+
+```cpp
+Complex& operator++() {
+        ++real;
+        ++imaginary;
+        return *this;
+    }//前置++
+Complex operator ++ (int) { //注意形参表中的整型参数
+    Complex temp(*this);
     ++(*this);  //调用前置“++”运算符
-    return old;
+    return temp;
 }//后置++
 ```
+
+#### 流操作运算符重载
+
+> 需定义为友元函数
+
+```cpp
+struct MyClass {
+		int value_;
+    MyClass(int value = 0) : value_(value) {}
+    friend std::ostream& operator<<(std::ostream& os, const MyClass& obj) {
+        os << "MyClass(" << obj.value_ << ")";
+        return os;
+    }
+    friend std::istream& operator>>(std::istream& is, MyClass& obj) {
+        is >> obj.value_;
+        return is;
+    }
+};
+int main(){
+  MyClass a;
+  cin >> a;//输入9
+  cout << a << endl;//MyClass(9)
+  return 0;
+}
+```
+
+#### 类型转换运算符重载
+
+```cpp
+// 将对象转换为double类型（返回值不写前面）
+//重载int()
+operator int(){
+  return (int)val;
+}
+```
+
+#### 赋值运算符重载
+
+> 不重载默认浅拷贝
+
+```cpp
+Complex& operator=(const MyClass& other){
+  real = other.real;
+  imaginary = other.imaginary;
+  return *this;
+}
+```
+
+
 
 ### 虚函数
 
@@ -840,7 +1025,14 @@ Clock Clock::operator ++ (int) {
 
 ### override
 
+> 只能在类内使用（不能在类外定义类函数时使用）
+
 `override` 是 C++11 中新增的关键字，用于标记一个成员函数（通常是虚函数）覆盖了其基类中的同名函数。通过使用 `override` 关键字，可以明确指出派生类中的函数是用来覆盖基类中的函数的，这有助于提高代码的可读性、可维护性和安全性。
+
+### final
+
+1. 修饰类时表示**类不能被继承**
+2. 修饰虚函数时表示**虚函数不能被后续继承覆写**
 
 ## 模板
 
@@ -861,3 +1053,52 @@ Clock Clock::operator ++ (int) {
 ### 异常接口声明
 
 ![截屏2022-12-12 12.06.24](./图片/截屏2022-12-12 12.06.24.png)
+
+## 文件系统
+
+### path类（C++17）
+
+```cpp
+#include <filesystem>
+using namespace std;
+namespace fs = std::filesystem;
+int main(){
+  fs::path p{"文件路径"};
+	string name{};
+  double score{};
+	//向文件写数据（覆盖）
+  ofstream output{p};
+  output<<"xx"<<endl;//用法同cout
+  output.close();
+	//从文件读数据
+  ifstram in{p};
+	in>>name>>score;//类型要匹配
+}
+```
+
+### 文件打开模式
+
+![image-20230510114455013](./图片//image-20230510114455013.png)
+
+```cpp
+#include <filesystem>
+#include <fstream>
+namespace fs = std::filesystem;
+int main(){
+  using fo = std::ios;
+  fs::path p{"filename"};
+  //向文件写数据
+  std::fstream out{p, fo::out|fo::app};//追加
+  char c;
+	while (!std::cin.get(c).eof ()) { 
+  out1.put (c);
+  }
+  out.close();
+  //从文件读数据
+  while (!in.get(c).eof ()) {
+    std::cout<<c;
+  }
+  in.close();
+}
+```
+
