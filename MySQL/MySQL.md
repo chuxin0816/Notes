@@ -406,7 +406,7 @@ WHERE EXISTS (SELECT *
 ### 创建和管理数据库
 
 ```sql
-CREATE DATABASE IF NOT EXISTS 数据库名 （CHARACTER SET 'utf8'）;#创建数据库
+CREATE DATABASE IF NOT EXISTS 数据库名 CHARASET 'utf8';#创建数据库
 SHOW DATABASES;#查看当前连接的数据库
 USE 数据库名;#切换数据库
 SHOW TABLES;#查看当前数据库中保存的数据表
