@@ -1,4 +1,4 @@
-#   MySQL
+#    MySQL
 
 [TOC]
 
@@ -24,7 +24,7 @@ SELECT 字段 AS 别名 FROM 表名;#AS:alias别名
 ### 去除重复行
 
 ```sql
-SELECT 字段 “别名” FROM 表名;
+SELECT DISTINCT 字段 “别名” FROM 表名;
 ```
 
 ### 空值参与运算
@@ -165,6 +165,7 @@ SELECT 字段 FROM 表名 WHERE 过滤条件 ORDER BY 字段
 #表示从偏移量开始选择指定数量,偏移量为0时可省略
 #8.0新特性
 LIMIT 数据数量 OFFSET 偏移量;
+LIMIT 偏移量,数据数量;
 ```
 
 ## 多表查询
@@ -321,6 +322,8 @@ SELECT COUNT(字段) FROM 表名 GROUP BY 字段2
 
 ### HAVING的使用
 
+> 分组前用WHERE，分组后用HAVING（可同时使用）
+>
 > 如果过滤条件使用了聚合函数，则必须用HAVING替换WHERE，否则用WHERE
 >
 > HAVING必须和GROUP BY一起使用并声明在GROUP BY后面
@@ -340,7 +343,7 @@ SELECT ... FROM ... WHERE ... GROUP BY ... HAVING ... ORDER BY ... LIMIT...;
 #### 执行顺序
 
 ```sql
-FROM -> WHERE -> GROUP BY -> HAVING -> SELECT 的字段 -> DISTINCT -> ORDER BY -> LIMIT;
+FROM -> ON -> JOIN -> WHERE -> GROUP BY(开始使用select中的别名，后面的语句中都可以使用) -> HAVING -> SELECT 的字段 -> DISTINCT -> ORDER BY -> LIMIT;
 ```
 
 ## 子查询
@@ -358,6 +361,8 @@ WHERE 字段 > (SELECT 字段
 ```
 
 ### 多行子查询
+
+> 查询结果为多个字段或表时字段用（）包起来
 
 ![image-20230401162034529](./图片//image-20230401162034529.png)
 
@@ -406,8 +411,8 @@ WHERE EXISTS (SELECT *
 ### 创建和管理数据库
 
 ```sql
-CREATE DATABASE IF NOT EXISTS 数据库名 CHARASET 'utf8';#创建数据库
-SHOW DATABASES;#查看当前连接的数据库
+CREATE DATABASE IF NOT EXISTS 数据库名 CHARSET utf8mb4;#创建数据库
+SHOW DATABASES;#查看所有数据库
 USE 数据库名;#切换数据库
 SHOW TABLES;#查看当前数据库中保存的数据表
 SELECT DATABASE();#查看当前使用的数据库
@@ -422,10 +427,13 @@ DROP DATABASE IF EXISTS 数据库名;#删除数据库
  CREATE TABLE IF NOT EXISTS 表名(
  字段1, 数据类型 [约束条件] [默认值],
  字段2, 数据类型 [约束条件] [默认值], 
- ……[表约束条件]
+ ……
+ 字段n, 数据类型 [约束条件] [默认值]
  );#从0开始创建 
  CREATE TABLE 表名 AS SELECT...; #基与现有表创建
  DESC 表名;#查看表结构
+ SHOW TABLES;#查看当前数据库所有表
+ SHOW CREATE TABLE 表名;#查看建表语句
  ```
 
 ### 修改表
@@ -487,13 +495,13 @@ FROM 源表名 [WHERE 过滤条件]#通过select语句插入
 ### 更新数据
 
 ```sql
-UPDATE 表名 SET 字段1 = value1，[字段2 = value2...] WHERE 过滤条件;
+UPDATE 表名 SET 字段1 = value1，[字段2 = value2...] [WHERE 过滤条件];
 ```
 
 ### 删除数据
 
 ```sql
-DELETE FROM ... [WHERE ...];
+DELETE FROM 表名 [WHERE ...];
 ```
 
 ### 计算列
@@ -648,9 +656,86 @@ alter table 表名称 modify 字段名 数据类型 ;-- 默认不保留非空约
 alter table 表名称 modify 字段名 数据类型 not null; -- 保留非空约束
 ```
 
+# 用户权限（DCL）
+
+## 用户管理
+
+### 查询用户
+
+```sql
+USE mysql;
+SELECT * FROM user;
+```
+
+### 创建用户
+
+```sql
+CREATE USER '用户名'@'主机名' IDENTIFIED BY '密码';
+```
+
+### 修改用户密码
+
+```sql
+ALTER USER '用户名'@'主机名' IDENTIFIED WITH mysql_native_password BY '新密码';
+```
+
+### 删除用户
+
+```sql
+DROP USER '用户名'@'主机名';
+```
+
+# 事务
+
+> 事务是一组操作的集合，它是一个不可分割的工作单位，事务会把所有的操作作为一个整体一起向系统提交或撤销操作请求，即这些操作要么同时成功，要么同时失败
+
+## 事务操作
+
+### 查看/设置事务提交方式
+
+```sql
+SELECT @@autocommit; --0为手动，1为自动
+SET @@autocommit=0;
+```
+
+### 开启事务
+
+```sql
+START TRANSACTION;
+或
+BEGIN;
+```
+
+### 提交事务
+
+```sql
+COMMIT:
+```
+
+### 回滚事务
+
+```sql
+ROLLBACK;
+```
+
+## 事务隔离
+
+### 查看事务隔离级别
+
+```sql
+SELECT @@TRANSACTION_ISOLATION;
+```
+
+### 设置事务隔离级别
+
+```sql
+SET [SESSION | GLOBAL] TRANSACTION ISOLATION LEVEL 
+{READ UNCOMMITTED | READ COMMITTED | REPEATABLE READ | SERIALIZABLE}; 
+```
+
 # 视图
 
-> 可以将视图理解为**存储起来的** **SELECT**语句
+> 可以将视图理解为**存储起来的** **SELECT**语句，对视图的修改将影响基表
 
 ## 创建视图
 
@@ -659,7 +744,9 @@ CREATE [OR REPLACE]
 [ALGORITHM = {UNDEFINED | MERGE | TEMPTABLE}] 
 VIEW 视图名称 [(字段列表)] 
 AS 查询语句 -- select语句可基于单表，多表联合，视图等
-[WITH [CASCADED|LOCAL] CHECK OPTION];
+[WITH [CASCADED|LOCAL] CHECK OPTION]; -- 检查选项，保证对视图的修改符合视图条件
+-- cascaded级联，插入看每个上级的条件，更新视图影响基表
+-- local，插入只看有检查选项的条件，更新视图不影响基表
 ```
 
 ## 查看视图
@@ -722,6 +809,19 @@ CALL 存储过程名(实参列表);
 CALL sp1('值');-- in
 CALL sp1(@name); SELECT @name;-- out
 SET @name=值; CALL sp1(@name); SELECT @name;-- inout
+```
+
+## 查看存储过程
+
+```sql
+SELECT * FROM INFORMATION_SCHEMA.ROUTINES WHERE ROUTINE_ SCHEMA = '数据库名';-- 查询指定数据库的存储过程及状态信息
+SHOW CREATE PROCEDURE 存储过程名称;-- 查询某个存储过程的定义
+```
+
+## 删除存储过程
+
+```sql
+DROP PROCEDURE [IF EXISTS] 存储过程名称;
 ```
 
 ## 存储函数的使用
@@ -961,7 +1061,7 @@ ITERATE label;
 
 ```sql
 CREATE TRIGGER 触发器名称 
-{BEFORE|AFTER} {INSERT|UPDATE|DELETE} ON 表名 
+{BEFORE|AFTER} {INSERT|UPDATE|DELETE} ON 表名 -- 使用NEW/OLD.字段访问操作前后的字段值
 FOR EACH ROW 
 触发器执行的语句块;-- 可以是单条SQL语句，也可以是由BEGIN…END结构组成的复合语句块
 ```
@@ -1012,3 +1112,239 @@ AS （子查询）
 SELECT|DELETE|UPDATE 语句;
 ```
 
+# 存储引擎
+
+> 存储引擎基于表
+
+## 查看当前数据库支持的存储引擎
+
+```sql
+SHOW ENGINES;
+```
+
+## 指定表存储引擎
+
+```sql
+CREATE TABLE 表名(字段名 类型...)engine=xxx; --默认为InnoDB
+```
+
+# 索引
+
+> 索引分为主键索引，唯一索引，常规索引
+>
+> InnoDB的索引为B+树索引
+
+## 创建索引
+
+```sql
+CREATE [UNIQUE|FULLTEXT] INDEX 索引名 ON 表名 (字段名...);
+-- 不指定索引类型则为常规索引，可同时为多个字段建立联合索引
+```
+
+## 查看索引
+
+```sql
+SHOW INDEX FROM 表名;
+```
+
+## 删除索引
+
+```sql
+DROP INDEX 索引名 ON 表名;
+```
+
+## 使用规则
+
+1. 最左前缀法则：使用**联合索引**必须存在最左侧的字段，跳过中间字段后面的字段索引失效
+
+2. 范围查询： 所以**联合索引**时使用>或<字段后面的字段索引生效，可用>=和<=规避
+
+3. 索引列运算：不要在索引列上运算（函数），索引会失效
+
+4. 字符串不加引号：字符串不加' '索引失效
+
+5. 模糊查询：头部模糊匹配索引失效，尾部不会
+
+6. or连接的条件：如果or任一侧没有索引，索引失效
+
+7. 数据发布影响：如果mysql评估索引比全表慢，则不走索引
+
+8. SQL提示：指定索引
+
+   ```sql
+   explain select xx from 表名 use index(索引名)...;		-- 建议索引
+   explain select xx from 表名 ignore index(索引名)...; -- 忽略索引
+   explain select xx from 表名 use index(索引名)...;    -- 强制索引
+   ```
+
+9. 覆盖索引：查询返回的字段尽量为主键和索引字段，避免回表查询
+
+10. 前缀索引：当字段为字符串时，使用部分前缀作为索引提高索引效率
+
+    ```sql
+    create index 索引名 on 表名(字段(n)); -- 以字段的前n个字符建立索引
+    ```
+
+11. 单列索引和联合索引：尽量使用联合索引，减少回表查询
+
+# 性能分析
+
+## 查看SQL执行频率
+
+```sql
+SHOW GLOBAL STATUS LIKE 'Com_______';  -- (7个_)
+```
+
+## 慢查询日志
+
+```bash
+vim /etc/my.cnf
+#添加下面的配置:
+slow_query_log=1 	#开启MySQL慢日志查询开关
+long_query_time=2 #SQL语句执行时间超过2秒，就会视为慢查询，记录慢查询日志
+
+#重启mysql服务
+systemctl restart mysqld 
+```
+
+> 查看慢日志文件中记录的信息:	/var/lib/mysql/主机名-slow.log
+
+## profile
+
+```sql
+SELECT @@have_profiling;	-- 查看当前数据库是否支持profile
+SET profiling = 1;				-- 开启profiling
+SHOW profiles;						-- 查看每条sql语句耗时
+```
+
+## explain执行计划
+
+> 在select语句前加explain
+
+### explain字段解释：
+
+1. **id：** id越大越先执行，id相同从上到下执行
+2. *select_type*:  查询类型
+3. **type:**  表示连接类型，性能NULL>system>const>eq_ref>ref>range>index>all
+4. possible_key:   可能用到的索引
+5. key： 实际用到的索引
+6. key_len:  索引中使用的字节数，**越短越好**
+7. **rows:**  必须要执行查询的行数 (估计值)
+8. filtered:  表示返回结果的行数占需读取行数的百分比，**越大越好**
+
+# SQL优化
+
+## 插入优化
+
+1. 批量插入
+
+2. 手动事务提交
+
+3. 主键顺序插入
+
+4. 大批量数据插入用**load**
+
+   ```sql
+   mysql --local-infile -u root -p
+   set global local_infile=1;
+   load data local infile '文件路径' into table '表名' fields terminated by '字段分隔符' lines terminated by '行分隔符';
+   ```
+
+## 主键优化
+
+1. 页分裂
+2. 页合并
+3. 尽量降低主键长度
+4. 尽量使用顺序插入，使用自增主键
+5. 尽量修改主键
+
+## order by优化
+
+1. 使用索引提高效率（using index > using filesort)
+2. 尽量覆盖查询，否则索引失效
+3. 索引默认升序ASC，如**多字段排序**某个字段需倒序DESC在创建索引时字段后面加上desc
+
+## group by优化
+
+使用索引提高效率（using index > using temporary)
+
+## limit优化
+
+可以通过覆盖索引加子查询形式进行优化
+
+## count优化
+
+count(*)性能最高
+
+## update优化
+
+根据索引字段更新，否则出现行锁升级为表锁影响并发性能
+
+# 锁
+
+## 全局锁
+
+```sql
+flush tables with read lock; -- 加锁
+unlock tables; -- 解锁
+```
+
+## 备份数据库
+
+> mysqldump为**shell**命令
+
+```shell
+# 1.备份前需加锁
+mysqldump [-h 主机IP地址] -u用户名 -p密码 数据库名 > xxx.sql; #备份当前数据库到xxx.sql
+
+# 2.不加锁，快照读
+mysqldump --single-transaction [-h 主机IP地址] -u用户名 -p密码 数据库名 > xxx.sql;
+```
+
+## 表级锁
+
+### 表锁
+
+1. 表共享读锁(read lock)：可读不可写
+
+2. 表独占写锁(write lock)：当前客户端可以读写，其他客户端不可读写
+
+```sql
+lock tables 表名 read/write; -- 加锁
+unlock tables; -- 解锁
+```
+
+### 元数据锁(自动)
+
+> 防止DML与DDL语句冲突
+>
+> 当对一张表进行增删改查的时候，加MDL读锁(共享)；当对表结构进行变更操作的时候，加MDL写锁(排他)
+
+### 意向锁
+
+> 解决行锁和表锁冲突问题
+
+1. 意向共享锁(IS)：select ... lock in share mode;加上行锁和表的意向锁
+
+2. 意向排他锁(IX)：update时自动添加
+
+## 行级锁
+
+### 行锁
+
+> 针对唯一索引进行检索时，对已存在的记录进行等值匹配时，将会自动优化为行锁
+>
+> InnoDB的行锁是针对于索引（加的锁，不通过索引条件检索数据，此时就会升级为表锁
+
+1. 共享锁(S)：允许一个事务去读一行，阻止其他事务获得相同数据集的排它锁
+2. 排他锁(X)：允许获取排他锁的事务更新数据，阻止其他事务获得相同数据集的共享锁和排他锁
+
+![image-20230827112233138](./图片/image-20230827112233138.png)
+
+### 间隙锁&临键锁（自动）
+
+> 临键锁=行锁+间隙锁
+
+1. 索引上的等值查询(唯一索引)，给不存在的记录加锁时，优化为间隙锁
+2. 素引上的等值查询(普通索引)，向右遍历时最后一个值不满足查询需求时，next-key lock 退化为间隙锁
+3. ﻿索引上的范国查询(唯一索引)，会访问到不满足条件的第一个值为止

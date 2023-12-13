@@ -66,6 +66,7 @@ docker attach 容器ID   #进入后台运行的容器（进入正在执行的终
 docker cp 容器ID:路径 字节路径 #从容器拷贝文件到主机
 docker cp 字节路径 容器ID:路径 #从主机拷贝文件到容器
 docker stats          #查看CPU状态
+docker image prune    #删除没有tag的镜像
 ```
 
 ## 提交镜像

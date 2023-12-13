@@ -222,6 +222,7 @@ func main() {
 ```go
 // Binding from JSON
 type Login struct {
+  //地址栏用form
 	User     string `form:"user" json:"user" binding:"required"`
 	Password string `form:"password" json:"password" binding:"required"`
 }
@@ -233,7 +234,7 @@ func main() {
 	r.POST("/loginJSON", func(c *gin.Context) {
 		var login Login
 
-		if err := c.ShouldBind(&login); err == nil {
+		if err := c.ShouldBindJSON(&login); err == nil {
 			fmt.Printf("login info:%#v\n", login)
 			c.JSON(http.StatusOK, gin.H{
 				"user":     login.User,
@@ -395,6 +396,12 @@ r.GET("/test2", func(c *gin.Context) {
  			})
  			//...
  		}
+   //无路由地址
+   r.NoRoute(func(c *gin.Context) {
+     c.JSON(http.StatusNotFound, gin.H{
+       xxxx
+     })
+   })
  ```
 
 ### 路由组
@@ -426,10 +433,8 @@ func StatCost() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		start := time.Now()
 		c.Set("name", "小王子") // 可以通过c.Set在请求上下文中设置值，后续的处理函数能够取到该值
-		// 调用该请求的剩余处理程序
-		c.Next()
-		// 不调用该请求的剩余处理程序
-		// c.Abort()
+		c.Next()			// 调用后续的处理程序
+		// c.Abort()  // 组织后续的处理程序
 		// 计算耗时
 		cost := time.Since(start)
 		log.Println(cost)
